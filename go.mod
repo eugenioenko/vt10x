@@ -1,3 +1,3 @@
-module github.com/hinshun/vt10x
+module github.com/eugenioenko/vt10x
 
 go 1.14
