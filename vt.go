@@ -50,6 +50,12 @@ type View interface {
 	// CursorVisible returns the visible state of the cursor.
 	CursorVisible() bool
 
+	// ScrollbackLen returns the number of lines in the scrollback buffer.
+	ScrollbackLen() int
+
+	// ScrollbackLine returns the scrollback line at index i (0 = oldest).
+	ScrollbackLine(i int) []Glyph
+
 	// Lock locks the state object's mutex.
 	Lock()
 
@@ -60,8 +66,9 @@ type View interface {
 type TerminalOption func(*TerminalInfo)
 
 type TerminalInfo struct {
-	w          io.Writer
-	cols, rows int
+	w             io.Writer
+	cols, rows    int
+	scrollbackMax int
 }
 
 func WithWriter(w io.Writer) TerminalOption {
@@ -74,6 +81,14 @@ func WithSize(cols, rows int) TerminalOption {
 	return func(info *TerminalInfo) {
 		info.cols = cols
 		info.rows = rows
+	}
+}
+
+// WithScrollback sets the maximum number of scrollback lines retained.
+// When set to 0 (default), no scrollback buffer is allocated.
+func WithScrollback(max int) TerminalOption {
+	return func(info *TerminalInfo) {
+		info.scrollbackMax = max
 	}
 }
 

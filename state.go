@@ -103,13 +103,23 @@ type State struct {
 	title         string
 	colorOverride map[Color]Color
 	OnScrollOut   func(line []Glyph)
+
+	scrollback    []line
+	scrollbackHead int
+	scrollbackLen  int
+	scrollbackMax  int
 }
 
-func newState(w io.Writer) *State {
-	return &State{
+func newState(w io.Writer, scrollbackMax int) *State {
+	s := &State{
 		w:             w,
+		scrollbackMax: scrollbackMax,
 		colorOverride: make(map[Color]Color),
 	}
+	if scrollbackMax > 0 {
+		s.scrollback = make([]line, scrollbackMax)
+	}
+	return s
 }
 
 func (t *State) logf(format string, args ...interface{}) {
@@ -481,11 +491,26 @@ func (t *State) scrollDown(orig, n int) {
 
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
-	if t.OnScrollOut != nil && orig == t.top {
+	if orig == t.top {
 		for i := orig; i < orig+n; i++ {
-			lineCopy := make([]Glyph, len(t.lines[i]))
-			copy(lineCopy, t.lines[i])
-			t.OnScrollOut(lineCopy)
+			if t.scrollbackMax > 0 {
+				idx := (t.scrollbackHead + t.scrollbackLen) % t.scrollbackMax
+				if t.scrollbackLen < t.scrollbackMax {
+					t.scrollback[idx] = make(line, len(t.lines[i]))
+					t.scrollbackLen++
+				} else {
+					if len(t.scrollback[idx]) != len(t.lines[i]) {
+						t.scrollback[idx] = make(line, len(t.lines[i]))
+					}
+					t.scrollbackHead = (t.scrollbackHead + 1) % t.scrollbackMax
+				}
+				copy(t.scrollback[idx], t.lines[i])
+			}
+			if t.OnScrollOut != nil {
+				lineCopy := make([]Glyph, len(t.lines[i]))
+				copy(lineCopy, t.lines[i])
+				t.OnScrollOut(lineCopy)
+			}
 		}
 	}
 	t.clear(0, orig, t.cols-1, orig+n-1)
@@ -757,6 +782,20 @@ func (t *State) setTitle(title string) {
 
 func (t *State) Size() (cols, rows int) {
 	return t.cols, t.rows
+}
+
+// ScrollbackLen returns the number of lines in the scrollback buffer.
+func (t *State) ScrollbackLen() int {
+	return t.scrollbackLen
+}
+
+// ScrollbackLine returns the scrollback line at index i (0 = oldest).
+// Returns nil if index is out of range or scrollback is not enabled.
+func (t *State) ScrollbackLine(i int) []Glyph {
+	if i < 0 || i >= t.scrollbackLen {
+		return nil
+	}
+	return t.scrollback[(t.scrollbackHead+i)%t.scrollbackMax]
 }
 
 func (t *State) String() string {
