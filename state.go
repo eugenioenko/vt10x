@@ -101,6 +101,7 @@ type State struct {
 	tabs          []bool
 	title         string
 	colorOverride map[Color]Color
+	OnScrollOut   func(line []Glyph)
 }
 
 func newState(w io.Writer) *State {
@@ -476,6 +477,13 @@ func (t *State) scrollDown(orig, n int) {
 
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
+	if t.OnScrollOut != nil && orig == t.top {
+		for i := orig; i < orig+n; i++ {
+			lineCopy := make([]Glyph, len(t.lines[i]))
+			copy(lineCopy, t.lines[i])
+			t.OnScrollOut(lineCopy)
+		}
+	}
 	t.clear(0, orig, t.cols-1, orig+n-1)
 	t.changed |= ChangedScreen
 	for i := orig; i <= t.bottom-n; i++ {

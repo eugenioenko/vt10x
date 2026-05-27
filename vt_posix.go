@@ -101,6 +101,10 @@ func fullRuneBuffered(br *bufio.Reader) bool {
 	return utf8.FullRune(buf)
 }
 
+func (t *terminal) SetOnScrollOut(fn func(line []Glyph)) {
+	t.OnScrollOut = fn
+}
+
 func (t *terminal) Resize(cols, rows int) {
 	t.lock()
 	defer t.unlock()
