@@ -145,6 +145,9 @@ func (t *State) Unlock() {
 // Cell returns the glyph containing the character code, foreground color, and
 // background color at position (x, y) relative to the top left of the terminal.
 func (t *State) Cell(x, y int) Glyph {
+	if y < 0 || y >= len(t.lines) || x < 0 || x >= len(t.lines[y]) {
+		return Glyph{Char: ' ', FG: DefaultFG, BG: DefaultBG}
+	}
 	cell := t.lines[y][x]
 	fg, ok := t.colorOverride[cell.FG]
 	if ok {
