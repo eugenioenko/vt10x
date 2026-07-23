@@ -34,3 +34,38 @@ func TestCSIParse(t *testing.T) {
 		t.Fatal("CSI parse mismatch")
 	}
 }
+
+func TestEraseScrollback(t *testing.T) {
+	term := New(WithSize(10, 3), WithScrollback(100))
+	term.Write([]byte("\033[20h")) // set CRLF mode
+
+	// Push enough lines to overflow the 3-row screen into scrollback.
+	for i := 0; i < 10; i++ {
+		term.Write([]byte("line\n"))
+	}
+	if term.ScrollbackLen() == 0 {
+		t.Fatal("expected scrollback to be populated")
+	}
+
+	// ESC[3J (xterm E3) erases saved lines but not the visible screen.
+	term.Write([]byte("visible"))
+	term.Write([]byte("\033[3J"))
+
+	if got := term.ScrollbackLen(); got != 0 {
+		t.Fatalf("expected empty scrollback after ESC[3J, got %d lines", got)
+	}
+	if got := extractStr(term, 0, 6, term.Cursor().Y); got != "visible" {
+		t.Fatalf("ESC[3J must not clear the screen, got %q", got)
+	}
+
+	// Scrollback must keep working after the reset.
+	for i := 0; i < 10; i++ {
+		term.Write([]byte("more\n"))
+	}
+	if term.ScrollbackLen() == 0 {
+		t.Fatal("expected scrollback to repopulate after ESC[3J")
+	}
+	if line := term.ScrollbackLine(0); line == nil {
+		t.Fatal("expected ScrollbackLine(0) to be readable after repopulate")
+	}
+}

@@ -789,6 +789,12 @@ func (t *State) ScrollbackLen() int {
 	return t.scrollbackLen
 }
 
+// clearScrollback discards all lines in the scrollback buffer (xterm E3).
+func (t *State) clearScrollback() {
+	t.scrollbackHead = 0
+	t.scrollbackLen = 0
+}
+
 // ScrollbackLine returns the scrollback line at index i (0 = oldest).
 // Returns nil if index is out of range or scrollback is not enabled.
 func (t *State) ScrollbackLine(i int) []Glyph {
