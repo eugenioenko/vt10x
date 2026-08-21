@@ -62,3 +62,22 @@ func TestNewline(t *testing.T) {
 		t.Fatal(st.cur.X, st.cur.Y, attr.FG, attr.BG)
 	}
 }
+
+func TestScrollRegion(t *testing.T) {
+	term := New(WithSize(80, 24))
+
+	top, bottom := term.ScrollRegion()
+	if top != 0 || bottom != 23 {
+		t.Fatalf("default scroll region = [%d,%d], want [0,23]", top, bottom)
+	}
+
+	// DECSTBM: rows are 1-indexed on the wire, [top,bottom] returned 0-indexed.
+	_, err := term.Write([]byte("\033[5;20r"))
+	if err != nil && err != io.EOF {
+		t.Fatal(err)
+	}
+	top, bottom = term.ScrollRegion()
+	if top != 4 || bottom != 19 {
+		t.Fatalf("scroll region after DECSTBM 5;20r = [%d,%d], want [4,19]", top, bottom)
+	}
+}

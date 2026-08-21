@@ -56,6 +56,12 @@ type View interface {
 	// ScrollbackLine returns the scrollback line at index i (0 = oldest).
 	ScrollbackLine(i int) []Glyph
 
+	// ScrollRegion returns the current scroll region (DECSTBM) as 0-indexed,
+	// inclusive row bounds. Rows outside [top, bottom] sit outside the
+	// active scrolling region -- a full-screen app commonly leaves a status
+	// or input bar there, and those rows are never pushed to scrollback.
+	ScrollRegion() (top, bottom int)
+
 	// Lock locks the state object's mutex.
 	Lock()
 
