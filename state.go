@@ -181,6 +181,12 @@ func (t *State) CursorVisible() bool {
 	return t.mode&ModeHide == 0
 }
 
+// ScrollRegion returns the current scroll region (DECSTBM) as 0-indexed,
+// inclusive row bounds.
+func (t *State) ScrollRegion() (top, bottom int) {
+	return t.top, t.bottom
+}
+
 // Mode returns the current terminal mode.
 func (t *State) Mode() ModeFlag {
 	return t.mode
