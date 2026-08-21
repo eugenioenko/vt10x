@@ -497,7 +497,7 @@ func (t *State) scrollDown(orig, n int) {
 
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
-	if orig == t.top {
+	if orig == t.top && t.mode&ModeAltScreen == 0 {
 		for i := orig; i < orig+n; i++ {
 			if t.scrollbackMax > 0 {
 				idx := (t.scrollbackHead + t.scrollbackLen) % t.scrollbackMax
