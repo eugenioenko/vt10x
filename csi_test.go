@@ -1,6 +1,7 @@
 package vt10x
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -67,5 +68,20 @@ func TestEraseScrollback(t *testing.T) {
 	}
 	if line := term.ScrollbackLine(0); line == nil {
 		t.Fatal("expected ScrollbackLine(0) to be readable after repopulate")
+	}
+}
+
+func TestDeviceAttributes(t *testing.T) {
+	var buf bytes.Buffer
+	term := New(WithWriter(&buf))
+	term.Write([]byte("\033[c"))
+	if got := buf.String(); got != "\033[?6c" {
+		t.Fatalf("expected \\033[?6c, got %q", got)
+	}
+
+	buf.Reset()
+	term.Write([]byte("\033[0c"))
+	if got := buf.String(); got != "\033[?6c" {
+		t.Fatalf("expected \\033[?6c, got %q", got)
 	}
 }
